@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"log"
 	"os"
 	"path/filepath"
 	"todo/internal/models"
@@ -23,7 +22,6 @@ func NewStore(pathOverride ...string) *Store {
 	} else {
 		p = DefaultDir() // Use the default
 	}
-	log.Printf("loading data from: %s", p)
 	s := &Store{path: p}
 	s.LoadAll()
 	return s
@@ -38,7 +36,6 @@ func (s *Store) LoadAll() error {
 	// load all Store data from disk
 	taskPath := filepath.Join(s.path, "tasks.json")
 	currentPath := filepath.Join(s.path, "current.json")
-	log.Printf("load data from: %s", taskPath)
 	allTasks, err := loadJSON[[]models.Task](taskPath)
 	if err != nil {
 		return err
@@ -56,7 +53,6 @@ func (s *Store) LoadAll() error {
 func (s *Store) SaveAll() error {
 	taskPath := filepath.Join(s.path, "tasks.json")
 	currentPath := filepath.Join(s.path, "current.json")
-	log.Printf("task path: %s\ncurrent path: %s", taskPath, currentPath)
 	if err := saveJSON(taskPath, s.Tasks); err != nil {
 		return fmt.Errorf("error saving tasks: %w.", err)
 	}
@@ -76,6 +72,18 @@ func (s *Store) AddTask(task models.Task) error {
 	return nil
 }
 
+func (s *Store) UpdateTask(taskUpdate models.Task) error {
+	// remove the task and replace the new one
+	for i, task := range s.Tasks {
+		if task.ID == taskUpdate.ID {
+			// update the task
+			s.Tasks[i] = taskUpdate
+		}
+		return nil
+	}
+	return fmt.Errorf("No id found for id= %s", taskUpdate.ID)
+}
+
 // loadJSON reads JSON from a file and unmarshals it into the provided type T.
 func loadJSON[T any](path string) (T, error) {
 	var data T // Declare the variable to hold the unmarshaled data
@@ -88,10 +96,8 @@ func loadJSON[T any](path string) (T, error) {
 	if err != nil {
 		return data, err
 	}
-	log.Printf("tried to load %s. Data: %s", path, fileData)
 
 	if err := json.Unmarshal(fileData, &data); err != nil {
-		log.Printf("tried to load %s. Data: %s", path, fileData)
 		return data, err
 	}
 	return data, nil
