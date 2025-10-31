@@ -2,11 +2,20 @@ package main
 
 import (
 	"fmt"
+	"github.com/tcoyne1729/todo/internal/models"
+	"github.com/tcoyne1729/todo/internal/storage"
 	"log"
 	"time"
-	"todo/internal/models"
-	"todo/internal/storage"
 )
+
+func pointString(taskId string, currentTask string) string {
+	pad := "   " // 3 spaces
+	if taskId != currentTask {
+		return pad
+	} else {
+		return "-->"
+	}
+}
 
 type ListCmd struct{}
 
@@ -16,9 +25,10 @@ func (l *ListCmd) Run(store *storage.Store) error {
 		fmt.Println("No tasks found.")
 		return nil
 	}
+	currentTask := store.Current
 
 	for i, t := range allTasks {
-		fmt.Printf("%d: [%s] %s %s\n", i, t.Status, t.Title, t.ID)
+		fmt.Printf("%d: %s [%s] %s %s\n", i, pointString(t.ID, currentTask), t.Status, t.Title, t.ID)
 	}
 	return nil
 }
@@ -119,6 +129,8 @@ func (c *StartCmd) Run(store *storage.Store) error {
 	if err := store.UpdateTask(newTask); err != nil {
 		return err
 	}
+	// update current task
+	store.Current = c.ID
 	if err := store.SaveAll(); err != nil {
 		return fmt.Errorf("Failed to start task: %w.", err)
 	}
@@ -127,8 +139,9 @@ func (c *StartCmd) Run(store *storage.Store) error {
 }
 
 type StopCmd struct {
-	ID         string `arg:"" help:"The id of the task you want to stop."`
-	AutoClosed bool   `short:"a" help:"if this task is autoclosed because it overran the threshold."`
+	ID         string    `arg:"" help:"The id of the task you want to stop."`
+	CloseTime  time.Time `help:"Time the task is to be closed at."`
+	AutoClosed bool      `short:"a" help:"if this task is autoclosed because it overran the threshold."`
 }
 
 func (c *StopCmd) Run(store *storage.Store) error {
@@ -142,14 +155,20 @@ func (c *StopCmd) Run(store *storage.Store) error {
 	if lastWorkLog.EndedAt != nil {
 		return fmt.Errorf("The task has not been started, so cannot be ended. id = %s", c.ID)
 	}
-	endTime := time.Now()
+	var endTime time.Time
+	if c.CloseTime.IsZero() {
+		endTime = time.Now()
+	} else {
+		endTime = c.CloseTime
+	}
 	newWorkLog := models.WorkSession{
 		StartedAt:  lastWorkLog.StartedAt,
 		EndedAt:    &endTime,
 		AutoClosed: c.AutoClosed,
 	}
 	newTask.WorkLog[noWorklogs-1] = newWorkLog
-
+	// unset current task
+	store.Current = ""
 	if err := store.SaveAll(); err != nil {
 		return fmt.Errorf("Failed to stop task: %w.", err)
 	}
@@ -158,8 +177,50 @@ func (c *StopCmd) Run(store *storage.Store) error {
 
 type SwitchCmd struct {
 	ID string `arg:"" help:"The id of the task you want to switch to."`
+	// optional
+	Comment string `help:"any additional information."`
 }
 
 func (c *SwitchCmd) Run(store *storage.Store) error {
+	// get the task
+	switchToTask, err := getTask(store, c.ID)
+	if err != nil {
+		return err
+	}
+	// if the task had been previously started, then stop it
+	if len(switchToTask.WorkLog) > 0 {
+		needToAutoClose := false
+		closeTime := time.Now()
+		lastWorkLog := switchToTask.WorkLog[len(switchToTask.WorkLog)-1]
+		lastStartedTime := lastWorkLog.StartedAt
+		if lastWorkLog.EndedAt == nil {
+
+			timeNow := time.Now()
+			// autoclose if the task was started on the prior date
+			if !(lastStartedTime.Year() == timeNow.Year() && lastStartedTime.Month() == timeNow.Month() && lastStartedTime.Day() == timeNow.Day()) {
+				// auto close
+				needToAutoClose = true
+				closeTime = time.Date(lastStartedTime.Year(), lastStartedTime.Month(), lastStartedTime.Day(), 0, 0, 0, 0, lastWorkLog.StartedAt.Location()).AddDate(0, 0, 1)
+			}
+			// stop the task and start a new one
+			stop := StopCmd{
+				ID:         c.ID,
+				CloseTime:  closeTime,
+				AutoClosed: needToAutoClose,
+			}
+			if err := stop.Run(store); err != nil {
+				return err
+			}
+		}
+	}
+	// start new task
+	start := StartCmd{
+		ID:      c.ID,
+		Comment: c.Comment,
+	}
+	if err := start.Run(store); err != nil {
+		return err
+	}
+
 	return nil
 }

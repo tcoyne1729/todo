@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/alecthomas/kong"
-	"todo/internal/storage"
+	"github.com/tcoyne1729/todo/internal/storage"
 )
 
 var CLI struct {

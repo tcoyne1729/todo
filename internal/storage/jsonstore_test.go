@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"todo/internal/models"
-	"todo/internal/storage"
+	"github.com/tcoyne1729/todo/internal/models"
+	"github.com/tcoyne1729/todo/internal/storage"
 )
 
 // Helper function to create a temporary directory path
