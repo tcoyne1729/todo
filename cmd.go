@@ -8,13 +8,15 @@ import (
 	"time"
 )
 
-func pointString(taskId string, currentTask string) string {
-	pad := "   " // 3 spaces
-	if taskId != currentTask {
-		return pad
-	} else {
+type Cmd interface {
+	Run(store *storage.Store) error
+}
+
+func pointString(taskID string, currentTask string) string {
+	if taskID == currentTask {
 		return "-->"
 	}
+	return "   " // 3 spaces
 }
 
 type ListCmd struct{}
@@ -48,13 +50,17 @@ func (c *AddCmd) Run(store *storage.Store) error {
 			Name: c.Tag,
 		})
 	}
+	priority := c.Priority
+	if c.Priority == 0 {
+		priority = 2 // medium
+	}
 
 	newTask := models.Task{
 		ID:          store.NewID(),
 		Title:       c.Title,
 		Body:        c.Body,
 		Tags:        tags,
-		Priority:    c.Priority,
+		Priority:    priority,
 		Status:      "todo",
 		IsActive:    false,
 		EnteredAt:   time.Now(),
@@ -63,49 +69,60 @@ func (c *AddCmd) Run(store *storage.Store) error {
 
 	// add the tasks
 	if err := store.AddTask(newTask); err != nil {
-		return fmt.Errorf("Failed to add task: %w.", err)
+		return fmt.Errorf("failed to add task: %w", err)
 	}
-	log.Println("Added item..")
+	log.Println("Added item...")
 	if err := store.SaveAll(); err != nil {
-		return fmt.Errorf("Failed to add task: %w.", err)
+		return fmt.Errorf("failed to add task: %w", err)
 	}
-	fmt.Printf("Task added: %s (%s)", newTask.Title, newTask.ID)
+	fmt.Printf("Task added: %s (%s)\n", newTask.Title, newTask.ID)
 	return nil
 }
 
 func getTask(store *storage.Store, id string) (models.Task, error) {
-	taskUndefined := true
-	var newTask models.Task
 	for _, task := range store.Tasks {
 		if task.ID == id {
-			newTask = task
-			taskUndefined = false
+			return task, nil
 		}
 	}
-	if taskUndefined {
-		return models.Task{}, fmt.Errorf("No task defined for id = %s", id)
-	}
-	return newTask, nil
+	return models.Task{}, fmt.Errorf("no task defined for id = %s", id)
 
 }
 
 type StartCmd struct {
 	ID string `arg:"" help:"ID of the task you are starting."`
-	// summary
-	Comment string `help:"any additional information."`
 }
 
 func (c *StartCmd) Run(store *storage.Store) error {
 	// update the work
-	newWorkLog := models.WorkSession{
-		StartedAt: time.Now(),
-	}
-	newTask, err := getTask(store, c.ID)
+	newTask, err := Start(c.ID, store)
 	if err != nil {
 		return err
 	}
+	// garunteed to have a worklog from the Start function as long as no err
+	newWorkLog := newTask.WorkLog[len(newTask.WorkLog)-1]
+
+	if err := store.UpdateTask(newTask); err != nil {
+		return err
+	}
+	// update current task
+	store.Current = c.ID
+	if err := store.SaveAll(); err != nil {
+		return fmt.Errorf("failed to start task: %w", err)
+	}
+	fmt.Printf("%s, Started task: %s\n", newWorkLog.StartedAt.Format(time.Kitchen), newTask.Title)
+	return nil
+}
+func Start(id string, store *storage.Store) (models.Task, error) {
+	newWorkLog := models.WorkSession{
+		StartedAt: time.Now(),
+	}
+	newTask, err := getTask(store, id)
+	if err != nil {
+		return models.Task{}, err
+	}
 	if newTask.Status == "done" {
-		return fmt.Errorf("Can't work on a completed task.")
+		return models.Task{}, fmt.Errorf("can't work on a completed task")
 	}
 	if newTask.Status == "todo" {
 		// must be in progress
@@ -122,66 +139,78 @@ func (c *StartCmd) Run(store *storage.Store) error {
 		lastWorkLog := newTask.WorkLog[len(newTask.WorkLog)-1]
 		if lastWorkLog.EndedAt == nil {
 			// task already started
-			return fmt.Errorf("Task already started. id = %s", c.ID)
+			return models.Task{}, fmt.Errorf("task already started. id = %s", id)
 		}
 	}
 	newTask.WorkLog = append(newTask.WorkLog, newWorkLog)
-	if err := store.UpdateTask(newTask); err != nil {
-		return err
-	}
-	// update current task
-	store.Current = c.ID
-	if err := store.SaveAll(); err != nil {
-		return fmt.Errorf("Failed to start task: %w.", err)
-	}
-	fmt.Printf("%s, Started task: %s", newWorkLog.StartedAt, newTask.Title)
-	return nil
+	return newTask, nil
 }
 
 type StopCmd struct {
-	ID         string    `arg:"" help:"The id of the task you want to stop."`
+	ID         string    `help:"The id of the task you want to stop."`
 	CloseTime  time.Time `help:"Time the task is to be closed at."`
 	AutoClosed bool      `short:"a" help:"if this task is autoclosed because it overran the threshold."`
 }
 
 func (c *StopCmd) Run(store *storage.Store) error {
-	newTask, err := getTask(store, c.ID)
+	task, err := Stop(c.ID, c.CloseTime, c.AutoClosed, store)
 	if err != nil {
 		return err
 	}
-	// check if the session has already been started
-	noWorklogs := len(newTask.WorkLog)
-	lastWorkLog := newTask.WorkLog[noWorklogs-1]
-	if lastWorkLog.EndedAt != nil {
-		return fmt.Errorf("The task has not been started, so cannot be ended. id = %s", c.ID)
+	if err := store.UpdateTask(task); err != nil {
+		return err
 	}
-	var endTime time.Time
-	if c.CloseTime.IsZero() {
-		endTime = time.Now()
-	} else {
-		endTime = c.CloseTime
-	}
-	newWorkLog := models.WorkSession{
-		StartedAt:  lastWorkLog.StartedAt,
-		EndedAt:    &endTime,
-		AutoClosed: c.AutoClosed,
-	}
-	newTask.WorkLog[noWorklogs-1] = newWorkLog
 	// unset current task
 	store.Current = ""
 	if err := store.SaveAll(); err != nil {
-		return fmt.Errorf("Failed to stop task: %w.", err)
+		return fmt.Errorf("failed to stop task: %w", err)
 	}
 	return nil
 }
 
+func Stop(id string, closeTime time.Time, autoClosed bool, store *storage.Store) (models.Task, error) {
+	if id == "" {
+		id = store.Current
+		if store.Current == "" {
+			return models.Task{}, fmt.Errorf("no ID and no current item")
+		}
+	}
+	newTask, err := getTask(store, id)
+	if err != nil {
+		return models.Task{}, err
+	}
+	// check if the session has already been started
+	noWorklogs := len(newTask.WorkLog)
+	if noWorklogs == 0 {
+		return models.Task{}, fmt.Errorf("task has no active work sessions: id = %s", id)
+	}
+	lastWorkLog := newTask.WorkLog[noWorklogs-1]
+	if lastWorkLog.EndedAt != nil {
+		return models.Task{}, fmt.Errorf("last task has already been ended: id = %s", id)
+	}
+	var endTime time.Time
+	if closeTime.IsZero() {
+		endTime = time.Now()
+	} else {
+		endTime = closeTime
+	}
+	newWorkLog := models.WorkSession{
+		StartedAt:  lastWorkLog.StartedAt,
+		EndedAt:    &endTime,
+		AutoClosed: autoClosed,
+	}
+	newTask.WorkLog[noWorklogs-1] = newWorkLog
+	return newTask, nil
+}
+
 type SwitchCmd struct {
 	ID string `arg:"" help:"The id of the task you want to switch to."`
-	// optional
-	Comment string `help:"any additional information."`
 }
 
 func (c *SwitchCmd) Run(store *storage.Store) error {
+	if c.ID == "" {
+		return fmt.Errorf("no id provided")
+	}
 	// get the task
 	switchToTask, err := getTask(store, c.ID)
 	if err != nil {
@@ -215,8 +244,7 @@ func (c *SwitchCmd) Run(store *storage.Store) error {
 	}
 	// start new task
 	start := StartCmd{
-		ID:      c.ID,
-		Comment: c.Comment,
+		ID: c.ID,
 	}
 	if err := start.Run(store); err != nil {
 		return err
