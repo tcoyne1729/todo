@@ -78,8 +78,8 @@ func (s *Store) UpdateTask(taskUpdate models.Task) error {
 		if task.ID == taskUpdate.ID {
 			// update the task
 			s.Tasks[i] = taskUpdate
+			return nil
 		}
-		return nil
 	}
 	return fmt.Errorf("No id found for id= %s", taskUpdate.ID)
 }
@@ -111,4 +111,14 @@ func saveJSON(path string, v any) error {
 	}
 	// Use os.WriteFile with standard permissions (0644)
 	return os.WriteFile(path, data, 0644)
+}
+
+func (s *Store) GetTask(id string) (models.Task, error) {
+	for _, task := range s.Tasks {
+		if task.ID == id {
+			return task, nil
+		}
+	}
+	return models.Task{}, fmt.Errorf("no task defined for id = %s", id)
+
 }

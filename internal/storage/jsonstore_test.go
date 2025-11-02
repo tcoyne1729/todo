@@ -3,6 +3,7 @@ package storage_test
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -85,4 +86,97 @@ func TestLoadAll_NoFiles(t *testing.T) {
 	if s.Current != "" {
 		t.Errorf("Expected Current to be empty string, got %q", s.Current)
 	}
+}
+func TestGetTask(t *testing.T) {
+	t.Run("no tasks", func(t *testing.T) {
+		store := &storage.Store{}
+		id := "test"
+		gotTask, err := store.GetTask(id)
+		// expect got_models to be models.Task{}
+		// expect an error "no task defined for id = test"
+		expected_err := "no task defined for id = test"
+		if err == nil {
+			t.Fatalf("expected error, got nil")
+		}
+		if err.Error() != expected_err {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if !reflect.DeepEqual(gotTask, models.Task{}) {
+			t.Errorf("expected empty task, got %+v", gotTask)
+		}
+	})
+
+	t.Run("task exists", func(t *testing.T) {
+		task := models.Task{
+			ID: "test",
+		}
+		store := &storage.Store{
+			Tasks: []models.Task{task},
+		}
+		id := "test"
+		// run test
+		got, err := store.GetTask(id)
+		if err != nil {
+			t.Errorf("expected no error, got %v", err)
+		}
+		if !reflect.DeepEqual(got, task) {
+			t.Errorf("expected task with id %s, got %+v", id, got)
+		}
+	})
+}
+
+func TestUpdateTask(t *testing.T) {
+	t.Run("update a single task", func(t *testing.T) {
+		origTask := models.Task{
+			ID:    "1",
+			Title: "original",
+		}
+		newTitle := "new"
+		newTask := models.Task{
+			ID:    "1",
+			Title: newTitle,
+		}
+		store := &storage.Store{
+			Tasks: []models.Task{origTask},
+		}
+		err := store.UpdateTask(newTask)
+		if err != nil {
+			t.Errorf("task not updated: %v", err)
+		}
+		if store.Tasks[0].Title != newTitle {
+			t.Errorf("expected title updated to %s, got %s", newTitle, store.Tasks[0].Title)
+		}
+	})
+
+	t.Run("update more complex task", func(t *testing.T) {
+		t1 := models.Task{
+			ID: "t1",
+		}
+		origTask := models.Task{
+			ID:     "t2",
+			Title:  "Task2",
+			Status: "todo",
+		}
+		store := &storage.Store{
+			Tasks: []models.Task{t1, origTask},
+		}
+		newTask, err := store.GetTask("t2")
+		if err != nil {
+			t.Fatalf("failed to get task t2")
+		}
+		newTask.WorkLog = append(newTask.WorkLog, models.WorkSession{
+			StartedAt: time.Now(),
+		})
+		err = store.UpdateTask(newTask)
+		if err != nil {
+			t.Errorf("task not updated: %v", err)
+		}
+		newTaskUpdate, err := store.GetTask("t2")
+		if err != nil {
+			t.Fatalf("did not get the update")
+		}
+		if len(newTaskUpdate.WorkLog) != 1 {
+			t.Errorf("not updated")
+		}
+	})
 }
