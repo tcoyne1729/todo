@@ -57,9 +57,6 @@ func Start(id string, store *storage.Store) (models.Task, error) {
 		// must be in progress
 		newTask.Status = "in_progress"
 	}
-	if !newTask.IsActive {
-		newTask.IsActive = true
-	}
 	// need to deal with the case where the worksession
 	// is open then we need to return an error saying the
 	// session is already active
@@ -80,4 +77,33 @@ func PointString(taskID string, currentTask string) string {
 		return "-->"
 	}
 	return "   " // 3 spaces
+}
+
+func StopIfStarted(task *models.Task, store *storage.Store) error {
+
+	if len(task.WorkLog) > 0 {
+		needToAutoClose := false
+		closeTime := time.Now()
+		lastWorkLog := task.WorkLog[len(task.WorkLog)-1]
+		lastStartedTime := lastWorkLog.StartedAt
+		if lastWorkLog.EndedAt == nil {
+			timeNow := time.Now()
+			// autoclose if the task was started on the prior date
+			if !(lastStartedTime.Year() == timeNow.Year() && lastStartedTime.Month() == timeNow.Month() && lastStartedTime.Day() == timeNow.Day()) {
+				// auto close
+				needToAutoClose = true
+				closeTime = time.Date(lastStartedTime.Year(), lastStartedTime.Month(), lastStartedTime.Day(), 0, 0, 0, 0, lastWorkLog.StartedAt.Location()).AddDate(0, 0, 1)
+			}
+			// stop the task and start a new one
+			stop := StopCmd{
+				ID:         task.ID,
+				CloseTime:  closeTime,
+				AutoClosed: needToAutoClose,
+			}
+			if err := stop.Run(store); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }

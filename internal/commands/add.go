@@ -35,7 +35,6 @@ func (c *AddCmd) Run(store *storage.Store) error {
 		Tags:        tags,
 		Priority:    priority,
 		Status:      "todo",
-		IsActive:    false,
 		EnteredAt:   time.Now(),
 		LastUpdated: time.Now(),
 	}
