@@ -13,7 +13,7 @@ var CLI struct {
 	Stop   commands.StopCmd   `cmd:"" help:"Stop current task"`
 	Switch commands.SwitchCmd `cmd:"" help:"Switch to another task"`
 	Done   commands.DoneCmd   `cmd:"" help:"Mark a task done"`
-	// Note    NoteCmd    `cmd:"" help:"Add a note"`
+	Note   commands.NoteCmd   `cmd:"" help:"Add a note"`
 	// Summary SummaryCmd `cmd:"" help:"Show work summary"`
 	// Export  ExportCmd  `cmd:"" help:"Export data"`
 }

@@ -12,7 +12,7 @@ type Task struct {
 	EstimatedTaskTimeInDays float32       `json:"estimated_task_time_in_days"`
 	EnteredAt               time.Time     `json:"entered_at"`
 	WorkLog                 []WorkSession `json:"work_log"`
-	Notes                   []string      `json:"notes"`
+	Notes                   []Note        `json:"notes"`
 	LastUpdated             time.Time     `json:"last_updated"`
 }
 
