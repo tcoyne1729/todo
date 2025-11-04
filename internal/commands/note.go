@@ -9,13 +9,19 @@ import (
 
 type NoteCmd struct {
 	Note string `arg:"" help:"Note to add to the current task"`
+	ID   string `help:"If you want to add a note to a non-current task, add the ID here"`
 }
 
 func (l *NoteCmd) Run(store *storage.Store) error {
-	if store.Current == "" {
+	var current string
+	if (store.Current == "") && (l.ID == "") {
 		return fmt.Errorf("no current task to add note to")
+	} else if l.ID == "" {
+		current = store.Current
+	} else {
+		current = l.ID
 	}
-	task, err := store.GetTask(store.Current)
+	task, err := store.GetTask(current)
 	if err != nil {
 		return err
 	}
