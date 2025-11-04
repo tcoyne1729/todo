@@ -14,6 +14,7 @@ var CLI struct {
 	Switch commands.SwitchCmd `cmd:"" help:"Switch to another task"`
 	Done   commands.DoneCmd   `cmd:"" help:"Mark a task done"`
 	Note   commands.NoteCmd   `cmd:"" help:"Add a note"`
+	Status commands.StatusCmd `cmd:"" help:"Status of the current task"`
 	// backfill -> id, start, end (optional). If end not set then you are doing switch with a start datetime set
 	// status -> info about the current task
 	// Tag -> add a tag
