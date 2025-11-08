@@ -1,6 +1,7 @@
 package storage_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -32,9 +33,14 @@ func TestLoadAndSaveAll(t *testing.T) {
 		{ID: "2", Title: "Write Code", EnteredAt: now},
 	}
 	sampleCurrent := "2"
+	sampleTags := []models.Tag{
+		{Name: "t1", Context: "ct1"},
+		{Name: "t2", Context: "ct2"},
+	}
 
 	s.Tasks = sampleTasks
 	s.Current = sampleCurrent
+	s.Tags = sampleTags
 
 	// 2. Test SaveAll
 	if err := s.SaveAll(); err != nil {
@@ -66,6 +72,15 @@ func TestLoadAndSaveAll(t *testing.T) {
 	}
 	if s2.Tasks[0].Title != sampleTasks[0].Title {
 		t.Errorf("Task 0 title mismatch. Got %q, want %q", s2.Tasks[0].Title, sampleTasks[0].Title)
+	}
+	if len(s2.Tags) != len(sampleTags) {
+		t.Errorf("Mismatch in length of tags. Got %d, want %d", len(s2.Tags), len(sampleTags))
+	}
+	if len(s2.Tags) < 2 || len(sampleTags) < 2 {
+		t.Fatal("empty tags. expected list of 2 tags")
+	}
+	if s2.Tags[0].Name != sampleTags[0].Name && s2.Tags[1].Name != sampleTags[1].Name {
+		t.Errorf("tags not the same. Want %v, got %v", sampleTags, s2.Tags)
 	}
 }
 
@@ -177,6 +192,110 @@ func TestUpdateTask(t *testing.T) {
 		}
 		if len(newTaskUpdate.WorkLog) != 1 {
 			t.Errorf("not updated")
+		}
+	})
+}
+
+func TestTags(t *testing.T) {
+	getStore := func() storage.Store {
+		store := storage.Store{
+			Tags: []models.Tag{
+				{Name: "t1", Context: "c1"},
+				{Name: "t2", Context: "c2"},
+			},
+		}
+		return store
+	}
+
+	t.Run("add tag", func(t *testing.T) {
+		store := getStore()
+		newTag := models.Tag{
+			Name: "t3",
+		}
+		err := store.AddTag(newTag)
+		if err != nil {
+			t.Fatal("tag failed to add")
+		}
+		if len(store.Tags) != 3 {
+			t.Errorf("incorrect number of tags, expected 3, got %d", len(store.Tags))
+		}
+	})
+	t.Run("add tag with same name", func(t *testing.T) {
+		store := getStore()
+		newTag := models.Tag{
+			Name: "t1",
+		}
+		err := store.AddTag(newTag)
+		expectedError := "tag t1 already exists\n"
+		if err.Error() != expectedError {
+			t.Errorf("expected error: %v, got %v", expectedError, err)
+		}
+	})
+
+	t.Run("delete tag", func(t *testing.T) {
+		store := getStore()
+		err := store.DeleteTag("t1")
+		if err != nil {
+			t.Fatalf("failed to delete tag: %v", err)
+		}
+		if len(store.Tags) != 1 {
+			t.Errorf("tag not deleted correctly, expected two tags but found %d", len(store.Tags))
+		}
+		if len(store.Tags) == 0 {
+			t.Fatal("expected at least one tag")
+		}
+		if store.Tags[0].Name != "t2" {
+			t.Errorf("the wrong tag was deleted or it permuted the existing tags")
+		}
+	})
+	t.Run("delete tag when no tags exist", func(t *testing.T) {
+		store := storage.Store{}
+		err := store.DeleteTag("t1")
+		expectedError := "tag t1 does not exist\n"
+		if err.Error() != expectedError {
+			t.Errorf("expected error: %v, got %v", expectedError, err)
+		}
+	})
+	t.Run("delete tag which isnt there", func(t *testing.T) {
+		store := getStore()
+		err := store.DeleteTag("t3")
+		expectedError := "tag t3 does not exist\n"
+		if err.Error() != expectedError {
+			t.Errorf("expected error: %v, got %v", expectedError, err)
+		}
+	})
+
+	t.Run("edit tag which doesnt exist", func(t *testing.T) {
+		store := getStore()
+		newTag := models.Tag{Name: "t3", Context: "c3"}
+		expectedError := "tag t3 does not exist\n"
+		fmt.Printf("before")
+		err := store.EditTag("t3", newTag)
+		fmt.Printf("after")
+		if err == nil {
+			t.Fatal("no error raised")
+		}
+
+		if err.Error() != expectedError {
+			t.Errorf("expected error: %s, got %s", expectedError, err.Error())
+		}
+	})
+	t.Run("edit tag", func(t *testing.T) {
+		store := getStore()
+		newTag := models.Tag{Name: "t3", Context: "c3"}
+		err := store.EditTag("t1", newTag)
+		if err != nil {
+			t.Fatal("failed to edit tag")
+		}
+		if len(store.Tags) == 0 {
+			t.Fatal("expected at least one tag but got none")
+		}
+		t1 := store.Tags[0]
+		if t1.Name != newTag.Name {
+			t.Errorf("updated tag name should be %s, got %s", newTag.Name, t1.Name)
+		}
+		if t1.Context != newTag.Context {
+			t.Errorf("updated tag name should be %s, got %s", newTag.Context, t1.Context)
 		}
 	})
 }

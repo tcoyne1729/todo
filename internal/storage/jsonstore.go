@@ -11,6 +11,7 @@ import (
 
 type Store struct {
 	Tasks   []models.Task
+	Tags    []models.Tag
 	Current string
 	path    string
 }
@@ -36,7 +37,12 @@ func (s *Store) LoadAll() error {
 	// load all Store data from disk
 	taskPath := filepath.Join(s.path, "tasks.json")
 	currentPath := filepath.Join(s.path, "current.json")
+	tagPath := filepath.Join(s.path, "tags.json")
 	allTasks, err := loadJSON[[]models.Task](taskPath)
+	if err != nil {
+		return err
+	}
+	allTags, err := loadJSON[[]models.Tag](tagPath)
 	if err != nil {
 		return err
 	}
@@ -46,6 +52,7 @@ func (s *Store) LoadAll() error {
 	}
 	s.Tasks = allTasks
 	s.Current = curr
+	s.Tags = allTags
 	return nil
 }
 
@@ -53,8 +60,12 @@ func (s *Store) LoadAll() error {
 func (s *Store) SaveAll() error {
 	taskPath := filepath.Join(s.path, "tasks.json")
 	currentPath := filepath.Join(s.path, "current.json")
+	tagPath := filepath.Join(s.path, "tags.json")
 	if err := saveJSON(taskPath, s.Tasks); err != nil {
 		return fmt.Errorf("error saving tasks: %w.", err)
+	}
+	if err := saveJSON(tagPath, s.Tags); err != nil {
+		return fmt.Errorf("error saving current tags: %w", err)
 	}
 	if err := saveJSON(currentPath, s.Current); err != nil {
 		return fmt.Errorf("error saving current task: %w.", err)
@@ -82,6 +93,60 @@ func (s *Store) UpdateTask(taskUpdate models.Task) error {
 		}
 	}
 	return fmt.Errorf("No id found for id= %s", taskUpdate.ID)
+}
+
+func (s *Store) AddTag(tag models.Tag) error {
+	for _, t := range s.Tags {
+		if t.Name == tag.Name {
+			return fmt.Errorf("tag %s already exists\n", tag.Name)
+		}
+	}
+	s.Tags = append(s.Tags, tag)
+	return nil
+}
+
+func (s *Store) DeleteTag(tagName string) error {
+	inputTags := s.Tags
+	inputNoTags := len(inputTags)
+	indexToRemove := -1
+	for i, tag := range inputTags {
+		// delete the tag from list
+		if tag.Name == tagName {
+			indexToRemove = i
+		}
+	}
+	if indexToRemove > -1 && indexToRemove < inputNoTags-1 {
+		s.Tags = append(s.Tags[:indexToRemove], s.Tags[indexToRemove+1:]...)
+		return nil
+	} else if indexToRemove > -1 {
+		s.Tags = s.Tags[:indexToRemove]
+		return nil
+	}
+	return fmt.Errorf("tag %s does not exist\n", tagName)
+}
+
+func (s *Store) GetTag(name string) (models.Tag, error) {
+	for _, tag := range s.Tags {
+		if tag.Name == name {
+			return tag, nil
+		}
+	}
+	return models.Tag{}, fmt.Errorf("tag %s does not exist\n", name)
+}
+
+func (s *Store) EditTag(originalName string, newTag models.Tag) error {
+	editIndex := -1
+	for i, tag := range s.Tags {
+		if tag.Name == originalName {
+			editIndex = i
+			// order and number of tags not changing so modify here
+			s.Tags[i] = newTag
+		}
+	}
+	if editIndex < 0 {
+		return fmt.Errorf("tag %s does not exist\n", originalName)
+	}
+	return nil
 }
 
 // loadJSON reads JSON from a file and unmarshals it into the provided type T.
