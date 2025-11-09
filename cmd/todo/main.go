@@ -1,4 +1,4 @@
-package main
+package todo
 
 import (
 	"github.com/alecthomas/kong"
@@ -17,8 +17,8 @@ var CLI struct {
 		Done   commands.DoneCmd   `cmd:"" help:"Mark a task done"`
 		Note   commands.NoteCmd   `cmd:"" help:"Add a note"`
 		Status commands.StatusCmd `cmd:"" help:"Status of the current task"`
-		Update commands.UpdateCmd `cmd:"" help:"update updateable fields of a task"`
-		Tag    commands.TagCmd    `cmd:"" help:"manipulate the tags on a task"`
+		// Update commands.UpdateCmd `cmd:"" help:"update updateable fields of a task"`
+		Tag commands.TagCmd `cmd:"" help:"manipulate the tags on a task"`
 	} `cmd:"" help:"any actions related to tasks"`
 	Tag struct {
 		Add    tags.TagAddCmd    `cmd:"" help:"Add a new tag"`

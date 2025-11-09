@@ -1,4 +1,4 @@
-package update
+package commands
 
 import "github.com/tcoyne1729/todo/internal/storage"
 
@@ -11,7 +11,7 @@ type UpdateCmd struct {
 	Priority int    `help:"new priority (should be 1, 2 or 3)"`
 }
 
-func (u *UpdateCmd) Run(store storage.Store) error {
+func (u *UpdateCmd) Run(store *storage.Store) error {
 	existingTask, err := store.GetTask(u.ID)
 	if err != nil {
 		return err
