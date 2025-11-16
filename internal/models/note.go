@@ -1,10 +1,9 @@
 package models
 
 import (
-	"time"
+	genericnotes "github.com/tcoyne1729/todo/internal/generic_notes"
 )
 
 type Note struct {
-	TimeStamp time.Time
-	Note      string
+	genericnotes.EntryBase
 }

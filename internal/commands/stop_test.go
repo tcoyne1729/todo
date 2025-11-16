@@ -1,26 +1,24 @@
 package commands_test
 
 import (
+	"testing"
+
 	"github.com/tcoyne1729/todo/internal/commands"
+	genericnotes "github.com/tcoyne1729/todo/internal/generic_notes"
 	"github.com/tcoyne1729/todo/internal/models"
 	"github.com/tcoyne1729/todo/internal/storage"
-	"testing"
-	"time"
 )
 
 func TestStop(t *testing.T) {
 	t.Run("stop a running task", func(t *testing.T) {
-		worklog := models.WorkSession{
-			StartedAt: time.Now(),
-		}
-		task := models.Task{
-			ID:      "t1",
-			Title:   "Task1",
-			Status:  "in_progress",
-			WorkLog: []models.WorkSession{worklog},
-		}
+		task := models.NewTask(models.NewTaskConfig{
+			ID:     "t1",
+			Title:  "Task1",
+			Status: "in_progress",
+		})
+		task.WorkLog.New(genericnotes.NewConfig{})
 		store := &storage.Store{
-			Tasks:   []models.Task{task},
+			Tasks:   []*models.Task{task},
 			Current: "t1",
 		}
 		stopCmd := commands.StopCmd{
@@ -36,8 +34,11 @@ func TestStop(t *testing.T) {
 		if err != nil {
 			t.Errorf("error loading task after stop")
 		}
-		t1WorkLog := gotTask.WorkLog[0]
-		if t1WorkLog.EndedAt == nil {
+		t1WorkLog, err := gotTask.WorkLog.GetLast()
+		if err != nil {
+			t.Fatal("could not get last work log")
+		}
+		if t1WorkLog.CompleteTime == nil {
 			t.Errorf("task 1 was not ended correctly. worklog: %v", t1WorkLog)
 		}
 	})

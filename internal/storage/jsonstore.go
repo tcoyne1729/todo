@@ -3,14 +3,13 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/tcoyne1729/todo/internal/models"
 	"os"
 	"path/filepath"
 )
 
 type Store struct {
-	Tasks   []models.Task
+	Tasks   []*models.Task
 	Tags    []models.Tag
 	Current string
 	path    string
@@ -23,14 +22,12 @@ func NewStore(pathOverride ...string) *Store {
 	} else {
 		p = DefaultDir() // Use the default
 	}
-	s := &Store{path: p}
+	s := &Store{
+		Tasks: make([]*models.Task, 0),
+		path:  p,
+	}
 	s.LoadAll()
 	return s
-}
-
-func (s *Store) NewID() string {
-	id := uuid.New()
-	return id.String()
 }
 
 func (s *Store) LoadAll() error {
@@ -38,7 +35,7 @@ func (s *Store) LoadAll() error {
 	taskPath := filepath.Join(s.path, "tasks.json")
 	currentPath := filepath.Join(s.path, "current.json")
 	tagPath := filepath.Join(s.path, "tags.json")
-	allTasks, err := loadJSON[[]models.Task](taskPath)
+	allTasks, err := loadJSON[[]*models.Task](taskPath)
 	if err != nil {
 		return err
 	}
@@ -73,17 +70,17 @@ func (s *Store) SaveAll() error {
 	return nil
 }
 
-func (s *Store) ListTasks() []models.Task {
+func (s *Store) ListTasks() []*models.Task {
 	return s.Tasks
 
 }
 
-func (s *Store) AddTask(task models.Task) error {
+func (s *Store) AddTask(task *models.Task) error {
 	s.Tasks = append(s.Tasks, task)
 	return nil
 }
 
-func (s *Store) UpdateTask(taskUpdate models.Task) error {
+func (s *Store) UpdateTask(taskUpdate *models.Task) error {
 	// remove the task and replace the new one
 	for i, task := range s.Tasks {
 		if task.ID == taskUpdate.ID {
@@ -178,12 +175,12 @@ func saveJSON(path string, v any) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-func (s *Store) GetTask(id string) (models.Task, error) {
+func (s *Store) GetTask(id string) (*models.Task, error) {
 	for _, task := range s.Tasks {
 		if task.ID == id {
 			return task, nil
 		}
 	}
-	return models.Task{}, fmt.Errorf("no task defined for id = %s", id)
+	return nil, fmt.Errorf("no task defined for id = %s", id)
 
 }

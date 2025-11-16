@@ -9,14 +9,14 @@ import (
 
 var CLI struct {
 	Task struct {
-		Add    commands.AddCmd    `cmd:"" help:"Add a new task"`
-		List   commands.ListCmd   `cmd:"" help:"List tasks"`
-		Start  commands.StartCmd  `cmd:"" help:"Start or resume a task"`
-		Stop   commands.StopCmd   `cmd:"" help:"Stop current task"`
-		Switch commands.SwitchCmd `cmd:"" help:"Switch to another task"`
-		Done   commands.DoneCmd   `cmd:"" help:"Mark a task done"`
-		Note   commands.NoteCmd   `cmd:"" help:"Add a note"`
-		Status commands.StatusCmd `cmd:"" help:"Status of the current task"`
+		// Add    commands.AddCmd    `cmd:"" help:"Add a new task"`
+		// List   commands.ListCmd   `cmd:"" help:"List tasks"`
+		// Start  commands.StartCmd  `cmd:"" help:"Start or resume a task"`
+		// Stop   commands.StopCmd   `cmd:"" help:"Stop current task"`
+		// Switch commands.SwitchCmd `cmd:"" help:"Switch to another task"`
+		// Done   commands.DoneCmd   `cmd:"" help:"Mark a task done"`
+		// Note   commands.NoteCmd   `cmd:"" help:"Add a note"`
+		// Status commands.StatusCmd `cmd:"" help:"Status of the current task"`
 		// Update commands.UpdateCmd `cmd:"" help:"update updateable fields of a task"`
 		Tag commands.TagCmd `cmd:"" help:"manipulate the tags on a task"`
 	} `cmd:"" help:"any actions related to tasks"`

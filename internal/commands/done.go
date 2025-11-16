@@ -15,7 +15,7 @@ func (l *DoneCmd) Run(store *storage.Store) error {
 	if err != nil {
 		return err
 	}
-	if err := StopIfStarted(&doneTask, store); err != nil {
+	if err := StopIfStarted(doneTask, store); err != nil {
 		return err
 	}
 	doneTask.Status = "done"
@@ -28,6 +28,5 @@ func (l *DoneCmd) Run(store *storage.Store) error {
 	if err = store.SaveAll(); err != nil {
 		return err
 	}
-
 	return nil
 }

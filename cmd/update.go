@@ -8,9 +8,9 @@ import (
 
 func init() {
 	rootCmd.AddCommand(updateCmd)
-	addCmd.Flags().StringP("body", "b", "", "Description of the task")
-	addCmd.Flags().StringP("title", "t", "", "Title of the task")
-	addCmd.Flags().Int32P("priority", "p", 0, "Priority of the task")
+	updateCmd.Flags().StringP("body", "b", "", "Description of the task")
+	updateCmd.Flags().StringP("title", "t", "", "Title of the task")
+	updateCmd.Flags().Int32P("priority", "p", 0, "Priority of the task")
 }
 
 var updateCmd = &cobra.Command{

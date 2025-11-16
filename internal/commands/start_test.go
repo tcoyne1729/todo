@@ -1,21 +1,22 @@
 package commands_test
 
 import (
+	"testing"
+
 	"github.com/tcoyne1729/todo/internal/commands"
 	"github.com/tcoyne1729/todo/internal/models"
 	"github.com/tcoyne1729/todo/internal/storage"
-	"testing"
 )
 
 func TestStart(t *testing.T) {
 	t.Run("start a new task", func(t *testing.T) {
-		task := models.Task{
+		task := models.NewTask(models.NewTaskConfig{
 			ID:     "t",
 			Title:  "Task",
 			Status: "todo",
-		}
+		})
 		store := &storage.Store{
-			Tasks:   []models.Task{task},
+			Tasks:   []*models.Task{task},
 			Current: "t",
 		}
 		startCmd := commands.StartCmd{
@@ -30,24 +31,24 @@ func TestStart(t *testing.T) {
 		if err != nil {
 			t.Errorf("error loading task after start")
 		}
-		gotWorkLog := gotTask.WorkLog
+		gotWorkLog := gotTask.WorkLog.Data
 		if len(gotWorkLog) != 1 {
-			t.Errorf("task worklog entry should have len 1 but got len %d", len(gotWorkLog))
+			t.Fatalf("task worklog entry should have len 1 but got len %d", len(gotWorkLog))
 		}
-		if gotWorkLog[0].EndedAt != nil {
+		if gotWorkLog[0].CompleteTime != nil {
 			t.Errorf("task 2 worklog should be open but is closed")
 		}
 
 	})
 
 	t.Run("store is updated after start", func(t *testing.T) {
-		task := models.Task{
+		task := models.NewTask(models.NewTaskConfig{
 			ID:     "t",
 			Title:  "Task",
 			Status: "todo",
-		}
+		})
 		store := &storage.Store{
-			Tasks:   []models.Task{task},
+			Tasks:   []*models.Task{task},
 			Current: "t",
 		}
 
@@ -56,41 +57,37 @@ func TestStart(t *testing.T) {
 			t.Fatalf("error starting task: %v", err)
 		}
 
-		// Tasks should be mutated
-		updated := store.Tasks[0]
-		if updated.Status != "in_progress" {
-			t.Errorf("expected store.Tasks[0].Status = in_progress, got %q", updated.Status)
+		if task.Status != "in_progress" {
+			t.Errorf("expected store.Tasks[0].Status = in_progress, got %q", task.Status)
 		}
-		if len(updated.WorkLog) != 1 {
-			t.Errorf("expected store.Tasks[0].WorkLog length = 1, got %d", len(updated.WorkLog))
+		if len(task.WorkLog.Data) != 1 {
+			t.Errorf("expected store.Tasks[0].WorkLog length = 1, got %d", len(task.WorkLog.Data))
 		}
-		if updated.WorkLog[0].EndedAt != nil {
-			t.Errorf("expected open WorkLog, got EndedAt=%v", updated.WorkLog[0].EndedAt)
+		if task.WorkLog.Data[0].CompleteTime != nil {
+			t.Errorf("expected open WorkLog, got EndedAt=%v", task.WorkLog.Data[0].CompleteTime)
 		}
 	})
 
 	t.Run("store is updated after start 2", func(t *testing.T) {
-		task := models.Task{
+		task := models.NewTask(models.NewTaskConfig{
 			ID:     "t",
 			Title:  "Task",
 			Status: "todo",
-		}
+		})
 		store := &storage.Store{
-			Tasks:   []models.Task{task},
+			Tasks:   []*models.Task{task},
 			Current: "t",
 		}
 
-		before := store.Tasks[0] // capture the original
 		startCmd := commands.StartCmd{ID: "t"}
 		if err := startCmd.Run(store); err != nil {
 			t.Fatalf("error starting: %v", err)
 		}
-		after := store.Tasks[0]
 
-		if before.Status == after.Status {
-			t.Errorf("expected task status to change from %q to something else", before.Status)
+		if "todo" == task.Status {
+			t.Errorf("expected task status to change from %q to something else", "todo")
 		}
-		if len(after.WorkLog) == 0 {
+		if len(task.WorkLog.Data) == 0 {
 			t.Errorf("expected WorkLog to be updated, got none")
 		}
 	})

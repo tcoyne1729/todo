@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/tcoyne1729/todo/cmd/block"
 	"github.com/tcoyne1729/todo/cmd/tag"
 	"github.com/tcoyne1729/todo/internal/storage"
 	"github.com/tcoyne1729/todo/store"
@@ -50,4 +51,5 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.AddCommand(tag.TagCmd)
+	rootCmd.AddCommand(block.BlockCmd)
 }

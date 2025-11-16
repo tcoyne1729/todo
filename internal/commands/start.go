@@ -2,8 +2,10 @@ package commands
 
 import (
 	"fmt"
-	"github.com/tcoyne1729/todo/internal/storage"
 	"time"
+
+	genericnotes "github.com/tcoyne1729/todo/internal/generic_notes"
+	"github.com/tcoyne1729/todo/internal/storage"
 )
 
 type StartCmd struct {
@@ -12,25 +14,33 @@ type StartCmd struct {
 
 func (c *StartCmd) Run(store *storage.Store) error {
 	// update the work
-	newTask, err := Start(c.ID, store)
+	curTask, err := store.GetTask(c.ID)
 	if err != nil {
 		return err
 	}
-	// garunteed to have a worklog from the Start function as long as no err
-	newWorkLog := newTask.WorkLog[len(newTask.WorkLog)-1]
+	lastWork, err := curTask.WorkLog.GetLast()
+	if err != nil {
+		return err
+	}
+	if lastWork != nil {
+		if lastWork.IsActive() {
+			return fmt.Errorf("this task is already started")
+		}
+	}
+	err = curTask.WorkLog.New(genericnotes.NewConfig{})
+	if err != nil {
+		return err
+	}
+	curTask.Status = "in_progress"
+	newWorkLog, err := curTask.WorkLog.GetLast()
+	if err != nil {
+		return err
+	}
 
-	// if err := store.UpdateTask(newTask); err != nil {
-	// 	return err
-	// }
-	err = store.UpdateTask(newTask)
-	if err != nil {
-		return err
-	}
-	// update current task
 	store.Current = c.ID
 	if err := store.SaveAll(); err != nil {
 		return fmt.Errorf("failed to start task: %w", err)
 	}
-	fmt.Printf("%s, Started task: %s\n", newWorkLog.StartedAt.Format(time.Kitchen), newTask.Title)
+	fmt.Printf("%s, Started task: %s\n", newWorkLog.CreateTime.Format(time.Kitchen), curTask.Title)
 	return nil
 }

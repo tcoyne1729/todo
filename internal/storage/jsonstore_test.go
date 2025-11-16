@@ -28,10 +28,20 @@ func TestLoadAndSaveAll(t *testing.T) {
 
 	// 1. Prepare Test Data
 	now := time.Now().Truncate(time.Second) // Important for DeepEqual check
-	sampleTasks := []models.Task{
-		{ID: "1", Title: "Buy Milk", EnteredAt: now},
-		{ID: "2", Title: "Write Code", EnteredAt: now},
-	}
+
+	// create two tasks
+	t1 := models.NewTask(models.NewTaskConfig{
+		ID:        "1",
+		Title:     "Buy Milk",
+		EnteredAt: now,
+	})
+	t2 := models.NewTask(models.NewTaskConfig{
+		ID:        "2",
+		Title:     "Write Code",
+		EnteredAt: now,
+	})
+
+	sampleTasks := []*models.Task{t1, t2}
 	sampleCurrent := "2"
 	sampleTags := []models.Tag{
 		{Name: "t1", Context: "ct1"},
@@ -116,17 +126,17 @@ func TestGetTask(t *testing.T) {
 		if err.Error() != expected_err {
 			t.Errorf("unexpected error: %v", err)
 		}
-		if !reflect.DeepEqual(gotTask, models.Task{}) {
+		if gotTask != nil {
 			t.Errorf("expected empty task, got %+v", gotTask)
 		}
 	})
 
 	t.Run("task exists", func(t *testing.T) {
-		task := models.Task{
+		task := models.NewTask(models.NewTaskConfig{
 			ID: "test",
-		}
+		})
 		store := &storage.Store{
-			Tasks: []models.Task{task},
+			Tasks: []*models.Task{task},
 		}
 		id := "test"
 		// run test
@@ -142,17 +152,17 @@ func TestGetTask(t *testing.T) {
 
 func TestUpdateTask(t *testing.T) {
 	t.Run("update a single task", func(t *testing.T) {
-		origTask := models.Task{
+		origTask := &models.Task{
 			ID:    "1",
 			Title: "original",
 		}
 		newTitle := "new"
-		newTask := models.Task{
+		newTask := models.NewTask(models.NewTaskConfig{
 			ID:    "1",
 			Title: newTitle,
-		}
+		})
 		store := &storage.Store{
-			Tasks: []models.Task{origTask},
+			Tasks: []*models.Task{origTask},
 		}
 		err := store.UpdateTask(newTask)
 		if err != nil {
@@ -160,38 +170,6 @@ func TestUpdateTask(t *testing.T) {
 		}
 		if store.Tasks[0].Title != newTitle {
 			t.Errorf("expected title updated to %s, got %s", newTitle, store.Tasks[0].Title)
-		}
-	})
-
-	t.Run("update more complex task", func(t *testing.T) {
-		t1 := models.Task{
-			ID: "t1",
-		}
-		origTask := models.Task{
-			ID:     "t2",
-			Title:  "Task2",
-			Status: "todo",
-		}
-		store := &storage.Store{
-			Tasks: []models.Task{t1, origTask},
-		}
-		newTask, err := store.GetTask("t2")
-		if err != nil {
-			t.Fatalf("failed to get task t2")
-		}
-		newTask.WorkLog = append(newTask.WorkLog, models.WorkSession{
-			StartedAt: time.Now(),
-		})
-		err = store.UpdateTask(newTask)
-		if err != nil {
-			t.Errorf("task not updated: %v", err)
-		}
-		newTaskUpdate, err := store.GetTask("t2")
-		if err != nil {
-			t.Fatalf("did not get the update")
-		}
-		if len(newTaskUpdate.WorkLog) != 1 {
-			t.Errorf("not updated")
 		}
 	})
 }

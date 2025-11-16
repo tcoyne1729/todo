@@ -1,9 +1,21 @@
 package models
 
-import "time"
+import (
+	genericnotes "github.com/tcoyne1729/todo/internal/generic_notes"
+)
 
 type WorkSession struct {
-	StartedAt  time.Time  `json:"started_at"`
-	EndedAt    *time.Time `json:"ended_at"`
-	AutoClosed bool       `json:"auto_closed"`
+	genericnotes.EntryBase
+	AutoClosed bool `json:"auto_closed"`
 }
+
+// func NewWorkSession(createTime time.Time) *WorkSession {
+// 	if createTime.IsZero() {
+// 		createTime = time.Now()
+// 	}
+// 	return &WorkSession{
+// 		EntryBase: &genericnotes.EntryBase{
+// 			CreateTime: createTime,
+// 		},
+// 	}
+// }

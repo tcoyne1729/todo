@@ -2,10 +2,11 @@ package commands
 
 import (
 	"fmt"
-	"github.com/tcoyne1729/todo/internal/models"
-	"github.com/tcoyne1729/todo/internal/storage"
 	"log"
 	"time"
+
+	"github.com/tcoyne1729/todo/internal/models"
+	"github.com/tcoyne1729/todo/internal/storage"
 )
 
 type AddCmd struct {
@@ -28,16 +29,14 @@ func (c *AddCmd) Run(store *storage.Store) error {
 		priority = 2 // medium
 	}
 
-	newTask := models.Task{
-		ID:          store.NewID(),
-		Title:       c.Title,
-		Body:        c.Body,
-		Tags:        tags,
-		Priority:    priority,
-		Status:      "todo",
-		EnteredAt:   time.Now(),
-		LastUpdated: time.Now(),
-	}
+	newTask := models.NewTask(models.NewTaskConfig{
+		Title:     c.Title,
+		Body:      c.Body,
+		Priority:  priority,
+		EnteredAt: time.Now(),
+	},
+	)
+	newTask.Tags = tags
 
 	// add the tasks
 	if err := store.AddTask(newTask); err != nil {

@@ -2,7 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/tcoyne1729/todo/internal/models"
 	"github.com/tcoyne1729/todo/internal/storage"
 )
 
@@ -20,7 +22,7 @@ func (c *SwitchCmd) Run(store *storage.Store) error {
 		if err != nil {
 			return err
 		}
-		if err := StopIfStarted(&currentTask, store); err != nil {
+		if err := StopIfStarted(currentTask, store); err != nil {
 			return err
 		}
 	}
@@ -30,7 +32,7 @@ func (c *SwitchCmd) Run(store *storage.Store) error {
 		return err
 	}
 	// if the switch to task had been previously started, then stop it
-	if err := StopIfStarted(&switchToTask, store); err != nil {
+	if err := StopIfStarted(switchToTask, store); err != nil {
 		return err
 	}
 
@@ -42,5 +44,38 @@ func (c *SwitchCmd) Run(store *storage.Store) error {
 		return err
 	}
 
+	return nil
+}
+
+func StopIfStarted(task *models.Task, store *storage.Store) error {
+
+	lastWorkLog, err := task.WorkLog.GetLast()
+	if err != nil {
+		return err
+	}
+	if lastWorkLog == nil {
+		return nil
+	}
+	needToAutoClose := false
+	closeTime := time.Now()
+	lastStartedTime := lastWorkLog.CreateTime
+	if lastWorkLog.CompleteTime == nil {
+		timeNow := time.Now()
+		// autoclose if the task was started on the prior date
+		if !(lastStartedTime.Year() == timeNow.Year() && lastStartedTime.Month() == timeNow.Month() && lastStartedTime.Day() == timeNow.Day()) {
+			// auto close
+			needToAutoClose = true
+			closeTime = time.Date(lastStartedTime.Year(), lastStartedTime.Month(), lastStartedTime.Day(), 0, 0, 0, 0, lastWorkLog.CreateTime.Location()).AddDate(0, 0, 1)
+		}
+		// stop the task and start a new one
+		stop := StopCmd{
+			ID:         task.ID,
+			CloseTime:  closeTime,
+			AutoClosed: needToAutoClose,
+		}
+		if err := stop.Run(store); err != nil {
+			return err
+		}
+	}
 	return nil
 }

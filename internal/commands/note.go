@@ -2,9 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"github.com/tcoyne1729/todo/internal/models"
+
+	genericnotes "github.com/tcoyne1729/todo/internal/generic_notes"
 	"github.com/tcoyne1729/todo/internal/storage"
-	"time"
 )
 
 type NoteCmd struct {
@@ -25,12 +25,9 @@ func (l *NoteCmd) Run(store *storage.Store) error {
 	if err != nil {
 		return err
 	}
-
-	newNote := models.Note{
-		TimeStamp: time.Now(),
-		Note:      l.Note,
-	}
-	task.Notes = append(task.Notes, newNote)
+	task.Notes.New(genericnotes.NewConfig{
+		Text: l.Note,
+	})
 
 	if err = store.UpdateTask(task); err != nil {
 		return err
