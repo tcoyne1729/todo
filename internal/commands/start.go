@@ -27,12 +27,12 @@ func (c *StartCmd) Run(store *storage.Store) error {
 			return fmt.Errorf("this task is already started")
 		}
 	}
-	err = curTask.WorkLog.New(genericnotes.NewConfig{})
+	newId, err := curTask.WorkLog.New(genericnotes.NewConfig{})
 	if err != nil {
 		return err
 	}
 	curTask.Status = "in_progress"
-	newWorkLog, err := curTask.WorkLog.GetLast()
+	newWorkLog, err := curTask.WorkLog.GetNote(newId)
 	if err != nil {
 		return err
 	}

@@ -7,12 +7,12 @@
     "priority": 0,
     "status": "in_progress",
     "estimated_task_time_in_days": 0,
-    "entered_at": "2025-11-16T22:45:12.26072123Z",
+    "entered_at": "2025-11-17T08:06:06.850668498Z",
     "work_log": [
       {
-        "id": "3c6a542e-3c94-4479-a6b1-eb860a1e6384",
-        "create_time": "2025-11-16T22:45:12.260725762Z",
-        "complete_time": "2025-11-16T22:45:12.260756354Z",
+        "id": "77e30cc0-5f03-49ba-be08-8d6cd8564f12",
+        "create_time": "2025-11-17T08:06:06.850674657Z",
+        "complete_time": "2025-11-17T08:06:06.850675316Z",
         "text": "",
         "auto_closed": false
       }
@@ -28,11 +28,11 @@
     "priority": 0,
     "status": "in_progress",
     "estimated_task_time_in_days": 0,
-    "entered_at": "2025-11-16T22:45:12.26075602Z",
+    "entered_at": "2025-11-17T08:06:06.850674857Z",
     "work_log": [
       {
-        "id": "ebfb8a60-7d54-4cb1-806d-f715c6c3bf6a",
-        "create_time": "2025-11-16T22:45:12.26086117Z",
+        "id": "77da6f09-e65d-41cd-92c2-3210da30399f",
+        "create_time": "2025-11-17T08:06:06.850838065Z",
         "complete_time": null,
         "text": "",
         "auto_closed": false

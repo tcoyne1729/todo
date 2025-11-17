@@ -6,6 +6,7 @@ import (
 	//
 	// "github.com/google/uuid"
 	// "github.com/tcoyne1729/todo/internal/models"
+	genericnotes "github.com/tcoyne1729/todo/internal/generic_notes"
 	"github.com/tcoyne1729/todo/internal/storage"
 )
 
@@ -13,9 +14,9 @@ type BlockCmd struct {
 	ID string
 }
 
-func (b *BlockCmd) Add(store *storage.Store, blockedBy string, note string) error {
+func (b *BlockCmd) Add(store *storage.Store, blockedBy string, note string) (string, error) {
 	if store.Current == "" && b.ID == "" {
-		return fmt.Errorf("no task to mark as blocked")
+		return "", fmt.Errorf("no task to mark as blocked")
 	}
 	var targetId string
 	if b.ID != "" {
@@ -25,29 +26,20 @@ func (b *BlockCmd) Add(store *storage.Store, blockedBy string, note string) erro
 	}
 	blockedTask, err := store.GetTask(targetId)
 	if err != nil {
-		return err
+		return "", err
 	}
-	fmt.Printf("blocked: %v", *blockedTask)
-	// blockers := blockedTask.Blockers
-	// newNote := models.Note{
-	// 	TimeStamp: time.Now(),
-	// 	Note:      note,
-	// }
-	// newBlocker := models.Blocker{
-	// 	ID:        uuid.New().String(),
-	// 	EnteredAt: time.Now(),
-	// 	BlockedBy: blockedBy,
-	// 	Notes:     []models.Note{newNote},
-	// }
-	// blockers = append(blockers, newBlocker)
-	// // store updated task
-	// if err = store.UpdateTask(blockedTask); err != nil {
-	// 	return err
-	// }
-	// if err = store.SaveAll(); err != nil {
-	// 	return err
-	// }
-	return nil
+	newId, err := blockedTask.Blockers.New(genericnotes.NewConfig{
+		Text: note,
+	})
+	if err != nil {
+		return "", err
+	}
+	block, err := blockedTask.Blockers.GetNote(newId)
+	if err != nil {
+		return "", err
+	}
+	block.BlockedBy = blockedBy
+	return newId, nil
 }
 func (b *BlockCmd) AddNote(store *storage.Store, id string, note string) error {
 	return nil
@@ -55,3 +47,4 @@ func (b *BlockCmd) AddNote(store *storage.Store, id string, note string) error {
 func (b *BlockCmd) Remove(store *storage.Store, id string) error {
 	return nil
 }
+func (b *BlockCmd) List() {}

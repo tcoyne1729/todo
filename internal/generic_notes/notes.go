@@ -52,27 +52,28 @@ type NewConfig struct {
 	Text       string
 }
 
-func (n *Notes[T]) New(config NewConfig) error {
+// Creates a new note object and returns its ID.
+func (n *Notes[T]) New(config NewConfig) (string, error) {
 	var zero T
 	t := reflect.TypeOf(zero)
 	if t.Kind() != reflect.Pointer {
-		return fmt.Errorf("generic type T must be a pointer to a struct")
+		return "", fmt.Errorf("generic type T must be a pointer to a struct")
 	}
 
 	newValue := reflect.New(t.Elem())
 	// convert back to an interface type T
 	newEntry, ok := newValue.Interface().(T)
 	if !ok {
-		fmt.Errorf("reflection failed to assert type %T to %T", newValue.Interface(), zero)
+		return "", fmt.Errorf("reflection failed to assert type %T to %T", newValue.Interface(), zero)
 	}
 
-	newEntry.SetId(config.ID)
+	newID := newEntry.SetId(config.ID)
 	newEntry.SetCreationTime(config.CreateTime)
 	newEntry.SetText(config.Text)
 
 	n.Data = append(n.Data, newEntry)
 
-	return nil
+	return newID, nil
 }
 
 func (n *Notes[T]) GetLast() (T, error) {
@@ -123,13 +124,14 @@ func (n *Notes[T]) Delete(id string) error {
 	return nil
 }
 
-func (n *Notes[T]) GetNote(id string) (*T, error) {
+func (n *Notes[T]) GetNote(id string) (T, error) {
+	var zero T
 	for i, note := range n.Data {
 		if note.GetID() == id {
-			return &n.Data[i], nil
+			return n.Data[i], nil
 		}
 	}
-	return nil, fmt.Errorf("no note with id %s", id)
+	return zero, fmt.Errorf("no note with id %s", id)
 }
 
 func (n *Notes[T]) ListAll() ([]T, error) { return n.Data, nil }
