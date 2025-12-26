@@ -1,6 +1,5 @@
 /*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
+Copyright © 2025 THOMAS COYNE <tcoyne@pm.me>
 */
 package main
 
