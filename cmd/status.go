@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/tcoyne1729/todo/internal/commands"
 	"github.com/tcoyne1729/todo/store"
@@ -15,7 +16,10 @@ var statusCmd = &cobra.Command{
 	Short: "get the status of the active task",
 	Long:  `get the status of the active task`,
 	Run: func(cmd *cobra.Command, args []string) {
-		addCmd := commands.StatusCmd{}
-		addCmd.Run(store.Store)
+		statusCmd := commands.StatusCmd{}
+		err := statusCmd.Run(store.Store)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
 	},
 }

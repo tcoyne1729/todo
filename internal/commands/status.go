@@ -27,6 +27,8 @@ func (s *StatusCmd) Run(store *storage.Store) error {
 		for _, note := range activeNotes {
 			fmt.Printf("%s: %s\n", note.CreateTime.Format("2006-01-02 15:04:05 MST"), note.Text)
 		}
+	} else {
+		fmt.Println("No active tasks.")
 	}
 	return nil
 }

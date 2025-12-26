@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/tcoyne1729/todo/internal/commands"
 	"github.com/tcoyne1729/todo/store"
@@ -17,9 +19,12 @@ var listCmd = &cobra.Command{
 	Long:  `list the active tasks. Use flags to list all tasks.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		all, _ := cmd.Flags().GetBool("all")
-		addCmd := commands.ListCmd{
+		listCmd := commands.ListCmd{
 			All: all,
 		}
-		addCmd.Run(store.Store)
+		err := listCmd.Run(store.Store)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
 	},
 }

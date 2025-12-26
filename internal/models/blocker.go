@@ -12,22 +12,6 @@ type BlockerNote struct {
 
 type Blocker struct {
 	genericnotes.EntryBase
-	BlockerNotes []*BlockerNote
+	BlockerNotes genericnotes.Notes[*BlockerNote]
 	BlockedBy    string
 }
-
-// func MyTest() error {
-// 	notes := genericnotes.NewNotes[*BlockerNote]()
-// 	blockerNote := &BlockerNote{
-// 		EntryBase: &genericnotes.EntryBase{
-// 			ID:         "1",
-// 			CreateTime: time.Now(),
-// 			Text:       "Need to get a response from Bob",
-// 		},
-// 	}
-//
-// 	if err := notes.Insert(blockerNote); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }

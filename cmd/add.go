@@ -20,13 +20,13 @@ var addCmd = &cobra.Command{
 	Short: "add a new task",
 	Long:  `add a new task`,
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		title := args[0]
 		body, _ := cmd.Flags().GetString("body")
 		priority, _ := cmd.Flags().GetInt32("priority")
 		tags, _ := cmd.Flags().GetStringArray("tag")
 		if len(tags) > 1 {
-			errors.New("not implemented more than one tag yet...\n")
+			return errors.New("not implemented more than one tag yet...")
 		}
 		if len(tags) == 0 {
 			tags = []string{""}
@@ -38,5 +38,6 @@ var addCmd = &cobra.Command{
 			Tag:      tags[0],
 		}
 		addCmd.Run(store.Store)
+		return nil
 	},
 }
