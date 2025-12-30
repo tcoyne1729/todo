@@ -1,6 +1,7 @@
 package models
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,6 +35,9 @@ func NewTask(config NewTaskConfig) *Task {
 	var id string
 	if config.ID == "" {
 		id = uuid.New().String()
+	} else if len(config.ID) < 36 {
+		// pad to 36 chars
+		id = strings.Repeat("0", 36-len(config.ID)) + config.ID
 	} else {
 		id = config.ID
 	}

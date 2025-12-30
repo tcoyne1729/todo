@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/tcoyne1729/todo/internal/models"
@@ -14,7 +14,18 @@ type SwitchCmd struct {
 
 func (c *SwitchCmd) Run(store *storage.Store) error {
 	if c.ID == "" {
-		return fmt.Errorf("no id provided for the task you want to switch to")
+		return errors.New("no id provided for the task you want to switch to")
+	}
+	var fullId string
+	if len(c.ID) < 36 {
+		// this must be a short ID
+		id, err := ShortToLongId(c.ID, store)
+		if err != nil {
+			return err
+		}
+		fullId = id
+	} else {
+		fullId = c.ID
 	}
 	if store.Current != "" {
 		// stop the current task
@@ -27,7 +38,7 @@ func (c *SwitchCmd) Run(store *storage.Store) error {
 		}
 	}
 	// get the task
-	switchToTask, err := store.GetTask(c.ID)
+	switchToTask, err := store.GetTask(fullId)
 	if err != nil {
 		return err
 	}
@@ -38,7 +49,7 @@ func (c *SwitchCmd) Run(store *storage.Store) error {
 
 	// start new task
 	start := StartCmd{
-		ID: c.ID,
+		ID: fullId,
 	}
 	if err := start.Run(store); err != nil {
 		return err

@@ -17,17 +17,17 @@ func TestStart(t *testing.T) {
 		})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task},
-			Current: "t",
+			Current: task.ID,
 		}
 		startCmd := commands.StartCmd{
-			ID: "t",
+			ID: task.ID,
 		}
 		if err := startCmd.Run(store); err != nil {
 			t.Errorf("error starting: %v", err)
 		}
 		// expectations:
 		// task should now be in_progress and have an open worklog
-		gotTask, err := store.GetTask("t")
+		gotTask, err := store.GetTask(task.ID)
 		if err != nil {
 			t.Errorf("error loading task after start")
 		}
@@ -49,10 +49,10 @@ func TestStart(t *testing.T) {
 		})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task},
-			Current: "t",
+			Current: task.ID,
 		}
 
-		startCmd := commands.StartCmd{ID: "t"}
+		startCmd := commands.StartCmd{ID: task.ID}
 		if err := startCmd.Run(store); err != nil {
 			t.Fatalf("error starting task: %v", err)
 		}
@@ -76,10 +76,10 @@ func TestStart(t *testing.T) {
 		})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task},
-			Current: "t",
+			Current: task.ID,
 		}
 
-		startCmd := commands.StartCmd{ID: "t"}
+		startCmd := commands.StartCmd{ID: task.ID}
 		if err := startCmd.Run(store); err != nil {
 			t.Fatalf("error starting: %v", err)
 		}

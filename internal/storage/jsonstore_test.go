@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -138,7 +139,7 @@ func TestGetTask(t *testing.T) {
 		store := &storage.Store{
 			Tasks: []*models.Task{task},
 		}
-		id := "test"
+		id := task.ID
 		// run test
 		got, err := store.GetTask(id)
 		if err != nil {
@@ -153,7 +154,7 @@ func TestGetTask(t *testing.T) {
 func TestUpdateTask(t *testing.T) {
 	t.Run("update a single task", func(t *testing.T) {
 		origTask := &models.Task{
-			ID:    "1",
+			ID:    strings.Repeat("0", 35) + "1",
 			Title: "original",
 		}
 		newTitle := "new"
@@ -166,7 +167,7 @@ func TestUpdateTask(t *testing.T) {
 		}
 		err := store.UpdateTask(newTask)
 		if err != nil {
-			t.Errorf("task not updated: %v", err)
+			t.Fatalf("task not updated: %v", err)
 		}
 		if store.Tasks[0].Title != newTitle {
 			t.Errorf("expected title updated to %s, got %s", newTitle, store.Tasks[0].Title)

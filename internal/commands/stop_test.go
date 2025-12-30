@@ -19,10 +19,10 @@ func TestStop(t *testing.T) {
 		task.WorkLog.New(genericnotes.NewConfig{})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task},
-			Current: "t1",
+			Current: task.ID,
 		}
 		stopCmd := commands.StopCmd{
-			ID: "t1",
+			ID: task.ID,
 		}
 		if err := stopCmd.Run(store); err != nil {
 			t.Errorf("error stopping: %v", err)
@@ -30,7 +30,7 @@ func TestStop(t *testing.T) {
 		// expectations:
 		// task1 should have a closed worklog
 		// task2 should now be in_progress and have an open worklog
-		gotTask, err := store.GetTask("t1")
+		gotTask, err := store.GetTask(task.ID)
 		if err != nil {
 			t.Errorf("error loading task after stop")
 		}

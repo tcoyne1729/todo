@@ -15,12 +15,13 @@ var switchCmd = &cobra.Command{
 	Short: "switch to a new task",
 	Long:  `switch to a new task`,
 	Args:  cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		id := args[0]
 		// we assume the user doesnt want to use the other parameters and keep them internal
 		switchCmd := commands.SwitchCmd{
 			ID: id,
 		}
-		switchCmd.Run(store.Store)
+		err := switchCmd.Run(store.Store)
+		return err
 	},
 }

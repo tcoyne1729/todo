@@ -20,6 +20,7 @@ type NoteEntry interface {
 	SetId(id string) string
 	SetCreationTime(createTime time.Time)
 	SetText(text string)
+	GetText() string
 }
 
 type Notes[T NoteEntry] struct {
@@ -175,6 +176,9 @@ func (e *EntryBase) SetCreationTime(createTime time.Time) {
 }
 func (e *EntryBase) SetText(text string) {
 	e.Text = text
+}
+func (e *EntryBase) GetText() string {
+	return e.Text
 }
 func (e *EntryBase) GetCreationTime() time.Time {
 	return e.CreateTime

@@ -37,17 +37,28 @@ func Stop(id string, closeTime time.Time, autoClosed bool, store *storage.Store)
 			return nil, fmt.Errorf("no ID and no current item")
 		}
 	}
-	newTask, err := store.GetTask(id)
+	var fullId string
+	if len(id) < 36 {
+		// this must be a short ID
+		idTmp, err := ShortToLongId(id, store)
+		if err != nil {
+			return nil, err
+		}
+		fullId = idTmp
+	} else {
+		fullId = id
+	}
+	newTask, err := store.GetTask(fullId)
 	if err != nil {
 		return nil, err
 	}
 	// check if the session has already been started
 	lastWorkLog, err := newTask.WorkLog.GetLast()
 	if err != nil {
-		return nil, fmt.Errorf("task has no active work sessions: id = %s", id)
+		return nil, fmt.Errorf("task has no active work sessions: id = %s", fullId)
 	}
 	if lastWorkLog.CompleteTime != nil {
-		return nil, fmt.Errorf("last task has already been ended: id = %s", id)
+		return nil, fmt.Errorf("last task has already been ended: id = %s", fullId)
 	}
 	var endTime time.Time
 	if closeTime.IsZero() {

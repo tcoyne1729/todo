@@ -25,14 +25,14 @@ func TestDone(t *testing.T) {
 		})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task1, task2},
-			Current: "t1",
+			Current: task1.ID,
 		}
 		cmd := commands.DoneCmd{}
 		if err := cmd.Run(store); err != nil {
 			t.Fatalf("could not run done command, err: %v", err)
 		}
 		// expect t1 now done
-		updatedT1, err := store.GetTask("t1")
+		updatedT1, err := store.GetTask(task1.ID)
 		if err != nil {
 			t.Fatal("cant load task after done command")
 		}
@@ -55,14 +55,14 @@ func TestDone(t *testing.T) {
 		})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task1, task2},
-			Current: "t1",
+			Current: task1.ID,
 		}
 		cmd := commands.DoneCmd{}
 		if err := cmd.Run(store); err != nil {
 			t.Fatal("could not run done command")
 		}
 		// expect t1 now done
-		updatedT1, err := store.GetTask("t1")
+		updatedT1, err := store.GetTask(task1.ID)
 		if err != nil {
 			t.Fatal("cant load task after done command")
 		}

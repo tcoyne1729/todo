@@ -18,7 +18,7 @@ func TestBlock(t *testing.T) {
 			Tasks:   []*models.Task{task1},
 			Current: "",
 		}
-		cmd := commands.BlockCmd{ID: "t1"}
+		cmd := commands.BlockCmd{ID: task1.ID}
 		blockPerson := "block person"
 		blockNote := "block note"
 		blockID, err := cmd.Add(store, blockPerson, blockNote)
@@ -53,7 +53,7 @@ func TestBlock(t *testing.T) {
 			Current: "",
 		}
 		expectedNoBlockers := 0
-		cmd := commands.BlockCmd{ID: "t1"}
+		cmd := commands.BlockCmd{ID: task1.ID}
 		blockers, err := cmd.List(store, true)
 		if err != nil {
 			t.Fatalf("error listing blockers: %v", err)
@@ -74,7 +74,7 @@ func TestBlock(t *testing.T) {
 			Tasks:   []*models.Task{task1},
 			Current: "",
 		}
-		cmd := commands.BlockCmd{ID: "t1"}
+		cmd := commands.BlockCmd{ID: task1.ID}
 		blockPerson := "block person"
 		blockNote := "block note"
 		blockID, err := cmd.Add(store, blockPerson, blockNote)
@@ -103,7 +103,7 @@ func TestBlock(t *testing.T) {
 			Current: "",
 		}
 		// add blocker 1
-		cmd := commands.BlockCmd{ID: "t1"}
+		cmd := commands.BlockCmd{ID: task1.ID}
 		blockPerson := "block person1"
 		blockNote := "block note1"
 		blockID1, err := cmd.Add(store, blockPerson, blockNote)
@@ -159,7 +159,7 @@ func TestBlock(t *testing.T) {
 			Tasks:   []*models.Task{task1},
 			Current: "",
 		}
-		cmd := commands.BlockCmd{ID: "t1"}
+		cmd := commands.BlockCmd{ID: task1.ID}
 		blockPerson := "block person"
 		blockNote := "block note"
 		blockID, err := cmd.Add(store, blockPerson, blockNote)

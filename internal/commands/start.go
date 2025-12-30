@@ -14,7 +14,18 @@ type StartCmd struct {
 
 func (c *StartCmd) Run(store *storage.Store) error {
 	// update the work
-	curTask, err := store.GetTask(c.ID)
+	var fullId string
+	if len(c.ID) < 36 {
+		// this must be a short ID
+		id, err := ShortToLongId(c.ID, store)
+		if err != nil {
+			return err
+		}
+		fullId = id
+	} else {
+		fullId = c.ID
+	}
+	curTask, err := store.GetTask(fullId)
 	if err != nil {
 		return err
 	}
@@ -37,7 +48,7 @@ func (c *StartCmd) Run(store *storage.Store) error {
 		return err
 	}
 
-	store.Current = c.ID
+	store.Current = fullId
 	if err := store.SaveAll(); err != nil {
 		return fmt.Errorf("failed to start task: %w", err)
 	}

@@ -24,10 +24,10 @@ func TestSwitch(t *testing.T) {
 		})
 		store := &storage.Store{
 			Tasks:   []*models.Task{task1, task2},
-			Current: "t1",
+			Current: task1.ID,
 		}
 		switchCmd := commands.SwitchCmd{
-			ID: "t2",
+			ID: task2.ID,
 		}
 		if err := switchCmd.Run(store); err != nil {
 			t.Errorf("error switching: %v", err)
@@ -35,7 +35,7 @@ func TestSwitch(t *testing.T) {
 		// expectations:
 		// task1 should have a closed worklog
 		// task2 should now be in_progress and have an open worklog
-		gotTask1, err := store.GetTask("t1")
+		gotTask1, err := store.GetTask(task1.ID)
 		if err != nil {
 			t.Errorf("error loading task1 after switch")
 		}
@@ -46,7 +46,7 @@ func TestSwitch(t *testing.T) {
 		if t1WorkLog.CompleteTime == nil {
 			t.Errorf("task 1 was not ended correctly. worklog: %v", t1WorkLog)
 		}
-		gotTask2, err := store.GetTask("t2")
+		gotTask2, err := store.GetTask(task2.ID)
 		if err != nil {
 			t.Fatalf("error loading task2 after switch")
 		}

@@ -22,7 +22,7 @@ var listCmd = &cobra.Command{
 		listCmd := commands.ListCmd{
 			All: all,
 		}
-		err := listCmd.Run(store.Store)
+		_, err := listCmd.Run(store.Store, true)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 		}

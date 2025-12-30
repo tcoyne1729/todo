@@ -89,7 +89,7 @@ func (s *Store) UpdateTask(taskUpdate *models.Task) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("No id found for id= %s", taskUpdate.ID)
+	return fmt.Errorf("No id found for id=%s", taskUpdate.ID)
 }
 
 func (s *Store) AddTag(tag models.Tag) error {
